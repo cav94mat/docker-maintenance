@@ -8,6 +8,7 @@ clean:
 	rm -f ./docker-maintenance.sh
 
 install:
-	mkdir /opt/docker-maintenance
+	mkdir -p /opt/docker-maintenance
 	cp ./docker-maintenance.sh /opt/docker-maintenance/docker-maintenance.sh
-	
+	cp -RT ./scripts /opt/docker-maintenance/scripts
+	ln -fs /opt/docker-maintenance/docker-maintenance.sh /usr/bin/docker-maintenance

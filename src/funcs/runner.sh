@@ -40,7 +40,7 @@ run_single() { # <stack>
                 stat_build=0
             } 
         # 3. Stop
-        { log -I "Stopping active containers..."; _docker_compose build --pull --no-cache; } \
+        { log -I "Stopping active containers..."; _docker_compose stop; } \
             || {
                 log -E "Error(s) occurred while stopping active containers."
                 return 1
