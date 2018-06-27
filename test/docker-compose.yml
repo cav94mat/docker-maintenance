@@ -1,0 +1,7 @@
+version: "2"
+services:
+  hello:
+    image: hello-world
+  hello-build:
+    image: cav94mat/hello
+    build: ./hello/src
