@@ -7,7 +7,7 @@ all: clean
 clean:
 	rm -f ./docker-maintenance.sh
 
-install:
+install: all
 	mkdir -p /opt/docker-maintenance
 	cp ./docker-maintenance.sh /opt/docker-maintenance/docker-maintenance.sh
 	cp -RT ./scripts /opt/docker-maintenance/scripts
