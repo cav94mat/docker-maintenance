@@ -4,6 +4,7 @@ run_single() { # <stack>
     (
         export stat_pull=
         export stat_build=
+        export stat_sideload=
         export stat_scripts=
         export stat_up=
         log -I "Maintenance started: $1"
@@ -32,20 +33,27 @@ run_single() { # <stack>
                 log -W "Error(s) occurred while pulling updated images."
                 stat_pull=0
             }
-        # 2. Build
+        # 2. Sideload
+        stat_sideload=1
+        [ "$no_sideload" -o ! -r './docker-sideload.tar' ] || { log -I "Sideloading local images..."; _docker load -i './docker-sideload.tar'; } \
+            || {
+                log -W "Error(s) occurred while sideloading local images."
+                stat_sideload=0
+            } 
+        # 3. Build
         stat_build=1
         [ "$no_build" ] || { log -I "Re-building local images..."; _docker_compose build --pull --no-cache; } \
             || {
                 log -W "Error(s) occurred while re-building local images."
                 stat_build=0
             } 
-        # 3. Stop
+        # 4. Stop
         { log -I "Stopping active containers..."; _docker_compose stop; } \
             || {
                 log -E "Error(s) occurred while stopping active containers."
                 return 1
             }
-        # 4. <Scripts>
+        # 5. <Scripts>
         for script in "${scripts[@]}"; do
             log -I "> Running script:" "$script \'$1\'"
             [ "$dryrun" ] || "$script" "$1" || {
@@ -61,14 +69,14 @@ run_single() { # <stack>
                 fi
             }
         done
-        # 5. Re-up
+        # 6. Re-up
         stat_up=1
         [ "$no_up" ] || { log -I "Re-creating containers (if required)..."; _docker_compose up -d; } \
             || {
                 log -W "Error(s) occurred while re-creating containers."
                 stat_up=0
             }
-        # 6. Post-scripts
+        # 7. Post-scripts
         for script in "${scripts_post[@]}"; do
             log -I "> Running post-script:" "$script \'$1\'"
             [ "$dryrun" ] || "$script" "$1" || {
@@ -98,9 +106,10 @@ run() {
             ;;
     esac
     while [ "$#" -gt 0 ]; do
-        log --diag "run: $1 -maxdepth $maxdepth -name $COMPOSE_FILE"
-        for i in $(find "$1" -maxdepth $maxdepth -name "$COMPOSE_FILE"); do
-            run_single "$i" || err=1
+        log --diag "find: $1 -maxdepth $maxdepth -name $COMPOSE_FILE"
+        for i in $(find "$1" -maxdepth $maxdepth -name "$COMPOSE_FILE" -printf '%h\n'|sort); do
+            log --diag "# $i/$COMPOSE_FILE"
+            run_single "$i/$COMPOSE_FILE" || err=1
         done
         shift;
     done
