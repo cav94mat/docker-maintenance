@@ -12,6 +12,7 @@ usage() {
     echo "  --dry             Dry run (does nothing, only logging)"
     echo ""
     echo "  --no-pull         Disable automatic image pull/update"
+    echo "  --no-sideload     Disable automatic image sideloading from ./docker-sideload.tar"
     echo "  --no-build        Disable automatic image re-building"
     echo "  --no-up           Disable automatic stack re-creation"
     echo "  --clean           Run \`docker system prune -af\` at the end" 
@@ -31,6 +32,7 @@ scripts_pre=()
 scripts_post=()
 no_pull=
 no_build=
+no_sideload=
 no_up=
 no_clean=1
 no_adv_clean=
@@ -75,6 +77,9 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
             ;;
         "--no-build")
             no_build=1
+            ;;
+        "--no-sideload")
+            no_sideload=1
             ;;
         "--no-up")
             no_up=1
