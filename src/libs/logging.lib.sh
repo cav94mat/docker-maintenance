@@ -1,6 +1,6 @@
 log() {
   #echo "$*" >&2
-  local ts="$(date -u +'%Y-%m-%d %H:%M:%S %Z')"
+  local ts="$(date +'%Y-%m-%d %H:%M:%S %Z')"
   local msg_g=
   local tag="$LOG_TAG"
   local exec=
