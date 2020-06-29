@@ -5,3 +5,12 @@ services:
   hello-build:
     image: cav94mat/hello
     build: ./hello/src
+  docker-maintenance:
+    command: --clean --recurse-one /srv
+    image: cav94mat/docker-maintenance
+    environment:
+      SCHEDULE: '07 15 * * *' #'0 4 * * *'
+      TZ: 'Europe/Rome'
+    volumes:
+      - './:/srv:z'
+      - '/var/run/docker.sock:/var/run/docker.sock:Z'

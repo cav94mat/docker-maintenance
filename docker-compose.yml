@@ -1,0 +1,10 @@
+version: '3.7'
+services:
+  docker-maintenance:
+    command: --clean --recurse-one /srv
+    image: cav94mat/docker-maintenance
+    environment:
+      SCHEDULE: '0 4 * * *'
+    volumes:
+      - '/srv:/srv:z'
+      - '/var/run/docker.sock:/var/run/docker.sock:Z'

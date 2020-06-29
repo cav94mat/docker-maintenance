@@ -1,12 +1,7 @@
 run_single() { # <stack>
     log --diag "run_single: $1"
     local dir="$(dirname "$1")"
-    (
-        export stat_pull=
-        export stat_build=
-        export stat_sideload=
-        export stat_scripts=
-        export stat_up=
+    (    
         log -I "Maintenance started: $1"
         cd "$dir"
         export LOG_TAG="$PWD"
@@ -27,33 +22,27 @@ run_single() { # <stack>
             }
         done
         # 1. Pull
-        stat_pull=1
+        export stat_pull=1
         [ "$no_pull" ] || { log -I "Pulling images..."; _docker_compose pull --parallel --ignore-pull-failures; } \
             || {
                 log -W "Error(s) occurred while pulling updated images."
                 stat_pull=0
             }
         # 2. Sideload
-        stat_sideload=1
+        export stat_sideload=1
         [ "$no_sideload" -o ! -r './docker-sideload.tar' ] || { log -I "Sideloading local images..."; _docker load -i './docker-sideload.tar'; } \
             || {
                 log -W "Error(s) occurred while sideloading local images."
                 stat_sideload=0
             } 
         # 3. Build
-        stat_build=1
+        export stat_build=1
         [ "$no_build" ] || { log -I "Re-building local images..."; _docker_compose build --pull --no-cache; } \
             || {
                 log -W "Error(s) occurred while re-building local images."
                 stat_build=0
-            } 
-        # 4. Stop
-        { log -I "Stopping active containers..."; _docker_compose stop; } \
-            || {
-                log -E "Error(s) occurred while stopping active containers."
-                return 1
             }
-        # 5. <Scripts>
+        # 4. <Scripts>
         for script in "${scripts[@]}"; do
             log -I "> Running script:" "$script \'$1\'"
             [ "$dryrun" ] || "$script" "$1" || {
@@ -69,14 +58,14 @@ run_single() { # <stack>
                 fi
             }
         done
-        # 6. Re-up
-        stat_up=1
+        # 5. Re-up
+        export stat_up=1
         [ "$no_up" ] || { log -I "Re-creating containers (if required)..."; _docker_compose up -d; } \
             || {
                 log -W "Error(s) occurred while re-creating containers."
                 stat_up=0
             }
-        # 7. Post-scripts
+        # 6. Post-scripts
         for script in "${scripts_post[@]}"; do
             log -I "> Running post-script:" "$script \'$1\'"
             [ "$dryrun" ] || "$script" "$1" || {
