@@ -6,11 +6,12 @@ services:
     image: cav94mat/hello
     build: ./hello/src
   docker-maintenance:
-    command: --clean --recurse-one /srv
+    command: --clean --recurse-one --no-pull ${PWD}
     image: cav94mat/docker-maintenance
     environment:
-      SCHEDULE: '07 15 * * *' #'0 4 * * *'
+      DEBUG: 1
+      SCHEDULE: '0 4 * * *'
       TZ: 'Europe/Rome'
     volumes:
-      - './:/srv:z'
+      - './:${PWD}:z'
       - '/var/run/docker.sock:/var/run/docker.sock:Z'

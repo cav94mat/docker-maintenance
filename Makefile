@@ -1,20 +1,23 @@
-.PHONY: all install clean
+.PHONY: image clean install install-wrapper compile install-sys clean-sys configure
 
-all: clean
+IMAGE='cav94mat/docker-maintenance'
+
+image: clean
+	docker build -t ${IMAGE} .
+	docker save -o './docker-sideload.tar' ${IMAGE}
+
+clean: configure
+	rm -f ./docker-sideload.tar
+	docker rmi ${IMAGE} || true
+
+compile: clean-sys
+	./make.sh compile
+
+install-sys: compile
+	./make.sh install
+
+clean-sys: configure
+	./make.sh clean
+
+configure:
 	chmod +x ./make.sh
-	./make.sh
-
-clean:
-	rm -f ./docker-maintenance.sh **/.last-maintenance.log
-
-install: all
-	mkdir -p /opt/docker-maintenance
-	cp ./docker-maintenance.sh /opt/docker-maintenance/docker-maintenance.sh
-	cp -RT ./scripts /opt/docker-maintenance/scripts
-	ln -fs /opt/docker-maintenance/docker-maintenance.sh /usr/bin/docker-maintenance
-
-docker: all
-	docker build -t cav94mat/docker-maintenance .
-
-docker-run: docker
-	docker-compose up -d

@@ -4,7 +4,11 @@ _docker() {
 }
 _docker_compose() {
     log --diag "$COMPOSE_BIN" "$@"
-    [ "$dryrun" ] || "$COMPOSE_BIN" "$@"
+    if [ "$DEBUG"]; then
+        [ "$dryrun" ] || "$COMPOSE_BIN" "$@"
+    else
+        [ "$dryrun" ] || "$COMPOSE_BIN" --verbose "$@"
+    fi
 }
 
 [ "$DOCKER_BIN" ] \

@@ -3,7 +3,7 @@ LABEL com.cav94mat.maintenance.keepalive=1
  RUN apk add --no-cache make bash findutils tzdata docker-cli docker-compose 
  ADD . /src
  RUN cd /src \
-  && make install \
-  && chmod +x 'src-docker/docker.sh' \
+  && OUTPUT_PATH= OUTPUT= INSTALL_DIR= INSTALL_BIN= make install-sys \
+  && chmod +x 'docker/entrypoint.sh' \
   && apk del --no-cache -r make
-ENTRYPOINT ["/src/src-docker/docker.sh"]
+ENTRYPOINT ["/src/docker/entrypoint.sh"]

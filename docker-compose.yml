@@ -7,4 +7,4 @@ services:
       SCHEDULE: '0 4 * * *'
     volumes:
       - '/srv:/srv:z'
-      - '/var/run/docker.sock:/var/run/docker.sock:Z'
+      - '/var/run/docker.sock:/var/run/docker.sock:z'
