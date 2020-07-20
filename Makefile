@@ -1,17 +1,24 @@
 .PHONY: image clean install install-wrapper compile install-sys clean-sys configure
 
-IMAGE='cav94mat/docker-maintenance'
+IMAGE=cav94mat/docker-maintenance
+SIDELOAD=docker-sideload.tar
+BUILD='0.9a'
 
 image: clean
 	docker build -t ${IMAGE} .
-	docker save -o './docker-sideload.tar' ${IMAGE}
+	docker save -o './${SIDELOAD}' ${IMAGE}
 
 clean: configure
-	rm -f ./docker-sideload.tar
-	docker rmi ${IMAGE} || true
+	rm -f './${SIDELOAD}' './test/${SIDELOAD}'
+	( cd ./test; docker-compose down )
+	docker rmi '${IMAGE}' || true
+
+test: image
+	mv './${SIDELOAD}' './test/${SIDELOAD}'
+	IMAGE='$(IMAGE)' ./make.sh test
 
 compile: clean-sys
-	./make.sh compile
+	BUILD='$(BUILD)' IMAGE='$(IMAGE)' ./make.sh compile
 
 install-sys: compile
 	./make.sh install

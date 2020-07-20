@@ -6,14 +6,14 @@ By default, the script performs the follow operations for any stack found in
 the arguments (and optionally subdirectories if `--recurse` or 
 `--recurse-one` have been specified):
 
-1. **Run pre-maintenance script(s)**, if specified with `--run-pre`;
-2. **Pull images** from the Docker registry;
-3. **Side-load images** from a local `docker-sideload.tar` file, if existing;
-4. **Build local images**, when source paths are specified in the YAML;
-5. **Run maintenance script(s)**, if specified with `--run`;
-6. **Re-deploy the stack** restarting or recreating containers whenever required;
-7. **Run post-maintenance script(s)**, if specified with `--run-post`;
-8. Optionally **perform cleanup operations**, if `--clean` is specified.
+0. **Run pre-maintenance script(s)**, if specified with `--run-pre`;
+1. **Pull images** from the Docker registry;
+2. **Side-load images** from a local `docker-sideload.tar` file, if existing;
+3. **Build local images**, when source paths are specified in the YAML;
+4. **Run maintenance script(s)**, if specified with `--run`;
+5. **Re-deploy the stack** restarting or recreating containers whenever required;
+6. **Run post-maintenance script(s)**, if specified with `--run-post`;
+7. Optionally **perform cleanup operations**, if `--clean` is specified.
 
 You can use `--dry` to simulate the execution and see the logs, without actually doing any operations or running any scripts.
 

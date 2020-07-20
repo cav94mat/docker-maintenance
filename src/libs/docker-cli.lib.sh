@@ -1,14 +1,10 @@
-_docker() {
-    log --diag "$DOCKER_BIN" "$@"
-    [ "$dryrun" ] || "$DOCKER_BIN" "$@"
+docker() {
+    log --diag $DOCKER_BIN "$@"
+    [ "$dryrun" ] || command $DOCKER_BIN "$@"
 }
-_docker_compose() {
-    log --diag "$COMPOSE_BIN" "$@"
-    if [ "$DEBUG"]; then
-        [ "$dryrun" ] || "$COMPOSE_BIN" "$@"
-    else
-        [ "$dryrun" ] || "$COMPOSE_BIN" --verbose "$@"
-    fi
+docker-compose() {
+    log --diag $COMPOSE_BIN "$@"
+    [ "$dryrun" ] || command $COMPOSE_BIN -f "$COMPOSE_FILE" "$@"
 }
 
 [ "$DOCKER_BIN" ] \
@@ -16,4 +12,4 @@ _docker_compose() {
 [ "$COMPOSE_BIN" ] \
     || COMPOSE_BIN="docker-compose"
 [ "$COMPOSE_FILE" ] \
-    || COMPOSE_FILE="docker-compose.yml"
+    || COMPOSE_FILE="docker-compose.yml"  

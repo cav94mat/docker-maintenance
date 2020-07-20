@@ -5,13 +5,24 @@ services:
   hello-build:
     image: cav94mat/hello
     build: ./hello/src
-  docker-maintenance:
-    command: --clean --recurse-one --no-pull ${PWD}
-    image: cav94mat/docker-maintenance
-    environment:
+  # Maintenance containers
+  test-maintenance:
+    command: --clean --recurse-one ${PWD}
+    image: ${IMAGE}
+    environment:      
       DEBUG: 1
-      SCHEDULE: '0 4 * * *'
-      TZ: 'Europe/Rome'
+      IMAGE: ${IMAGE}   
     volumes:
-      - './:${PWD}:z'
-      - '/var/run/docker.sock:/var/run/docker.sock:Z'
+      - '${PWD}:${PWD}:z'
+      - '/var/run/docker.sock:/var/run/docker.sock:z,ro'
+  cron-maintenance:
+    command: --clean --recurse-one --dry-run ${PWD}
+    image: ${IMAGE}
+    environment:      
+      DEBUG: 1
+      IMAGE: ${IMAGE}   
+      ON_SCHEDULE: '0 4 * * *'
+      TZ: 'Europe/Rome'    
+    volumes:
+      - '${PWD}:${PWD}:z'
+      - '/var/run/docker.sock:/var/run/docker.sock:z,ro'

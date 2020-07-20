@@ -1,3 +1,14 @@
+#@func Emit a log message.
+#@args [<<opts>>] [--|--msg|--message] [<<message-parts>>]
+#@args [<<opts>>] --execute <command> [<<args>>]
+#      -d: Emit only if $DEBUG is set.
+#      -D|--diag:  Use the DIAG level (implies -d).
+#      -I|--info:  Use the INFO level.
+#      -W|--warn:  Use the WARN level.
+#      -E|--fail:  Use the FAIL level.
+#      --execute:  Intepret the positional arguments as a command to be logged and run.
+#      --tag <s>:  Specify a string to be used as a source.
+# @env $DEBUG: (Boolean) Needs to be set in order to emit messages flagged with -d or -D.
 log() {
   #echo "$*" >&2
   local ts="$(date +'%Y-%m-%d %H:%M:%S %Z')"
