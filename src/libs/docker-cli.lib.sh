@@ -13,3 +13,9 @@ docker-compose() {
     || COMPOSE_BIN="docker-compose"
 [ "$COMPOSE_FILE" ] \
     || COMPOSE_FILE="docker-compose.yml"  
+
+if [ -z "$DOCKER_SOCK" ]; then
+    DOCKER_SOCK='/var/run/docker.sock'
+    [[ "$DOCKER_HOST" == "unix://"* ]] \
+        && DOCKER_SOCK="${DOCKER_HOST:7}"
+fi

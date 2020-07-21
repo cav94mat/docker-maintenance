@@ -1,4 +1,4 @@
-.PHONY: image clean install install-wrapper compile install-sys clean-sys configure
+.PHONY: image clean install compile install-sys clean-sys configure
 
 IMAGE=cav94mat/docker-maintenance
 SIDELOAD=docker-sideload.tar

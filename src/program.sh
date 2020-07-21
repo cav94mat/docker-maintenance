@@ -65,10 +65,7 @@ readonly ctrdata="$(get_ctrdata)"
 readonly ctrlog="$HOME/.ctrdata"
 [ "$DEBUG" ] && echo "$ctrdata" >"$ctrlog"
 #@const Docker socket file to forward to forked containers.
-fork_sock='/var/run/docker.sock'
-[[ "$DOCKER_HOST" == "unix://"* ]] && fork_sock="${DOCKER_HOST:7}"
-readonly fork_sock;
-
+readonly fork_sock="$DOCKER_SOCK"
 #@func Determine whether the current stack should be forked.
 #       If neither `--fork` or `--no-fork` were specified on the command line,
 #       the value is determine by checking if this script is being run on a container

@@ -1,21 +1,15 @@
 # cav94mat/docker-maintenance
+[![docker build: automated](https://img.shields.io/docker/cloud/build/cav94mat/docker-maintenance)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
+[![docker build: automated](https://img.shields.io/docker/cloud/automated/cav94mat/docker-maintenance)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
+![](https://img.shields.io/docker/image-size/cav94mat/docker-maintenance/latest)
 
-Schedulable maintenance script for **docker-compose** controlled stacks.
+Schedulable maintenance procedure for *docker-compose* stacks. It can be embedded as a service to existing stacks, run autonomously in a separated stack or container, or built and installed locally.
 
-By default, the script performs the follow operations for any stack found in 
-the arguments (and optionally subdirectories if `--recurse` or 
-`--recurse-one` have been specified):
+The procedure takes care of pulling the latest version, side-loading and/or building all the docker images specified in the stack, optionally running scripts before, during or after the operation, and re-creating the containers that need to.
 
-0. **Run pre-maintenance script(s)**, if specified with `--run-pre`;
-1. **Pull images** from the Docker registry;
-2. **Side-load images** from a local `docker-sideload.tar` file, if existing;
-3. **Build local images**, when source paths are specified in the YAML;
-4. **Run maintenance script(s)**, if specified with `--run`;
-5. **Re-deploy the stack** restarting or recreating containers whenever required;
-6. **Run post-maintenance script(s)**, if specified with `--run-post`;
-7. Optionally **perform cleanup operations**, if `--clean` is specified.
+![Maintenance workflow](docs/maintenance-workflow.png)
 
-You can use `--dry` to simulate the execution and see the logs, without actually doing any operations or running any scripts.
+You can also use the **--dry-run** option to simulate the execution, without actually performing any operations or running any scripts.
 
 For the entire reference of supported arguments, please run:
 
@@ -23,54 +17,57 @@ For the entire reference of supported arguments, please run:
 docker run -it --rm cav94mat/docker-maintenance --help
 ```
 
-## Use with existing stacks
-You just need to add a `docker-maintenance` service to your pre-existing _docker-compose.yml_ file:
+## Embedding to an existing stacks
+
+You just need to add a `cav94mat/docker-maintenance` service to your pre-existing _docker-compose.yml_ file. Maintenance can be scheduled by specifying a cron expression in the `$ON_SCHEDULE` variable, whereas `$ON_START` can be set to zero to suppress triggering every time the container is re-started.
 
 ```yaml
 services:
   # [...]
-  docker-maintenance:
-    command: --clean /srv
+  docker-maintenance:    
     image: cav94mat/docker-maintenance
+    reboot: unless-stopped
+    command: --clean ${PWD}
     environment:
-      SCHEDULE: '0 0 * * *' # Replace with the desired cron expression
-      TZ: 'Europe/Rome'     # Replace with your timezone
+      ON_SCHEDULE: '0 0 4 ? * * *' # Everyday, 4:00 am
+      TZ: 'Europe/Rome' # Set your timezone here
     volumes:
-      - './:/srv:z'
-      - '/var/run/docker.sock:/var/run/docker.sock:Z'
+      - '${PWD}:${PWD}:z'
+      - '/var/run/docker.sock:/var/run/docker.sock:z'
 ```
-> ⚠ You may want to replace `/srv` both in `command:` and in the first `volumes:` line to
->    reflect the path of the stack in the host system.
+> ⚠ Make sure the stack is mounted at the same path within the maintenance container. `${PWD}` normally expands to the *docker-compose.yml* directory.
 
-### Dedicated stack
-This approach is useful if you want to keep the maintenance services in a dedicated stack.
+## Deploying in a separate stack
+This approach is useful if you want to keep the maintenance services separated from the respective stacks. The **--recurse** and **--recurse-one** options may be useful if you have multiple stacks in nested directories.  
 
-The `--recurse` and `--recurse-one` options may be useful if 
+In this example, it's assumed the root path to traverse recursively for finding stacks is `/srv`:
 
 ```yaml
 version: '3.7'
 services:
-  docker-maintenance:
-    command: --clean --recurse /srv
+  docker-maintenance:    
     image: cav94mat/docker-maintenance
+    reboot: unless-stopped
+    command: --clean --recurse /srv
     environment:
-      SCHEDULE: '0 0 * * *' # Replace with the desired cron expression
-      TZ: 'Europe/Rome'     # Replace with your timezone
+      ON_SCHEDULE: '0 0 4 ? * * *' # Everyday, 4:00 am
+      TZ: 'Europe/Rome' # Set your timezone here
     volumes:
-      - '/srv:/srv:z'       # Replace `/srv` with the directory of your stack(s)
-      - '/var/run/docker.sock:/var/run/docker.sock:Z'
+      - '/srv:/srv:z'
+      - '/var/run/docker.sock:/var/run/docker.sock:z'
 ```
+> ⚠ If your stacks are in a different path than `/srv`, make sure to replace it with the correct one not only in the **`volumes:`** section, but also in **`command:`**
 
-### Local installation
+## Installing locally
 You can also install the `docker-maintenance` script locally, in order to launch
-the maintenance directly on the host.
+the maintenance directly on the host, provided all the required binaries are available (refer to the [Dockerfile](./Dockerfile)).
 
-Just clone the present repository and run `make install` as root:
+Just clone the present repository and run `sudo make install-sys`:
 
 ```sh
 git clone https://github.com/cav94mat/docker-maintenance.git
 cd docker-maintenance/
-sudo make install
+sudo make install-sys
 ```
 
-The script should be in your PATH, or anyway installed in `/usr/bin/docker-maintenance`.
+The script should now be accessible from your $PATH, or anyway installed in `/usr/bin/docker-maintenance`.
