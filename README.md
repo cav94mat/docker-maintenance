@@ -1,17 +1,18 @@
 # cav94mat/docker-maintenance
-[![docker build: automated](https://img.shields.io/docker/cloud/build/cav94mat/docker-maintenance)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
-[![docker build: automated](https://img.shields.io/docker/cloud/automated/cav94mat/docker-maintenance)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
-![](https://img.shields.io/docker/image-size/cav94mat/docker-maintenance/latest)
+[![Docker build status](https://img.shields.io/docker/cloud/build/cav94mat/docker-maintenance)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
+[![Docker build: automated](https://img.shields.io/docker/cloud/automated/cav94mat/docker-maintenance)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
+[![](https://img.shields.io/docker/image-size/cav94mat/docker-maintenance/latest)](https://hub.docker.com/r/cav94mat/docker-maintenance "Get from Docker Hub")
+[![Docs:Wiki](https://img.shields.io/badge/docs-wiki-yellow?style=flat&logo=github)](https://github.com/cav94mat/docker-maintenance/wiki "Visit the official Wiki")
 
 Schedulable maintenance procedure for *docker-compose* stacks. It can be embedded as a service to existing stacks, run autonomously in a separated stack or container, or built and installed locally.
 
-The procedure takes care of pulling the latest version, side-loading and/or building all the docker images specified in the stack, optionally running scripts before, during or after the operation, and re-creating the containers that need to.
+The procedure takes care of pulling (updating to the latest version), side-loading and/or building all the images specified in the stack, optionally running scripts before, during or after the operation, and re-creating the containers that need to.
 
 ![Maintenance workflow](docs/maintenance-workflow.png)
 
 You can also use the **--dry-run** option to simulate the execution, without actually performing any operations or running any scripts.
 
-For the entire reference of supported arguments, please run:
+For the entire reference of supported arguments refer to the [official wiki](https://github.com/cav94mat/docker-maintenance/wiki/Usage), or run:
 
 ```sh
 docker run -it --rm cav94mat/docker-maintenance --help
@@ -60,7 +61,7 @@ services:
 
 ## Installing locally
 You can also install the `docker-maintenance` script locally, in order to launch
-the maintenance directly on the host, provided all the required binaries are available (refer to the [Dockerfile](./Dockerfile)).
+the maintenance directly on the host, provided all the required binaries are available (refer to the [Dockerfile](https://github.com/cav94mat/docker-maintenance/blob/master/Dockerfile)).
 
 Just clone the present repository and run `sudo make install-sys`:
 

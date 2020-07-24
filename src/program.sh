@@ -256,15 +256,18 @@ while [ "$#" -gt 0 -a "${1:0:1}" = "-" ]; do
             g_fork=0
             ;;        
         "--run")
+            g_opts+=("$1")
             scripts+=("$2")
             shift 1
             ;;
         "--run-pre")
-            scripts_pre+=("$2")
+            g_opts+=("$1")
+            scripts_pre+=("$2")            
             shift 1
             ;;
         "--run-post")
-            scripts_post+=("$2")
+            g_opts+=("$1")
+            scripts_post+=("$2")            
             shift 1
             ;;
         "--no-pull")
