@@ -67,7 +67,7 @@ log() {
         ;;
       "D:"|"d:")
         debug=1;
-        if [ "$DEBUG" ]; then
+        if is-debug; then
           printf '\033[1;37m[ \033[1;35mDIAG \033[1;37m] \033[0;35m%s' "$ts"
           [ "$tag" ] && printf '\033[0;97m @\033[0;95m%s' "$tag";
         fi
@@ -79,15 +79,19 @@ log() {
         ;;
     esac
     # Print message
-    [ -z "$debug" -o "$DEBUG" ] && printf '\033[0;97m: %s\033[0m\n' "$msg"
+    if is-false "$debug" || is-debug; then
+       printf '\033[0;97m: %s\033[0m\n' "$msg"
+    fi
   } >&2
   if [ "$exec" ]; then
     # Execute
     "$@"
     local ec="$?"
-    log --diag " -> $ec"
+    log --diag "[$ec] $*"
     return "$ec"
   else
     return 0
   fi
 }
+
+export -f log

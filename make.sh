@@ -7,11 +7,14 @@ inc() { # <<files>>
 }
 
 cd "$(dirname "$0")"
+source 'src/libs/docker-cli.lib.sh'
 source 'src/libs/logging.lib.sh'
+source 'src/libs/vars.lib.sh'
 
 readonly image="${IMAGE:-cav94mat/docker-maintenance}"
 readonly output="${OUTPUT:-${OUTPUT_DIR:-.}/docker-maintenance.sh}"
-readonly build="${BUILD:-${USER}@$(date +%Y-%m-%d/%H:%m:%S)}"
+readonly sideload="${DOCKER_SIDELOAD:-${OUTPUT_DIR:-.}/docker-sideload.tar}"
+readonly build="${BUILD:-${DOCKER_TAG:-$(git rev-parse --short HEAD)}}" #${USER}@$(date +%Y-%m-%d/%H:%m:%S)
 readonly install_dir="${INSTALL_DIR:-/opt/docker-maintenance}"
 readonly install_bin="${INSTALL_BIN:-/usr/bin/docker-maintenance}"
 readonly test_ctr='test-maintenance'
@@ -29,10 +32,15 @@ while [ "$#" -gt 0 ]; do
                 echo "readonly fork_image='$image'"
                 echo ''
                 inc "./src/libs/"*.lib.sh
+                inc "./src/inc/"*.sh
                 echo ''
                 inc "./src/program.sh"
             } > "$output"
             chmod +x "$output"
+            ;;
+        "image")
+        	docker build --build-arg BUILD="${build}" -t "${image}" .
+	        docker save -o "${sideload}" "${image}"
             ;;
         "install")            
             log -I "Installing ${output} to ${install_dir}/"

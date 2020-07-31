@@ -1,5 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")"
+source '../src/libs/vars.lib.sh'
 source '../src/libs/logging.lib.sh'
 
 ON_SCHEDULE="${ON_SCHEDULE:-${SCHEDULE}}"

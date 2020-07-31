@@ -2,11 +2,9 @@
 
 IMAGE=cav94mat/docker-maintenance
 SIDELOAD=docker-sideload.tar
-BUILD='0.9a'
 
 image: clean
-	docker build -t ${IMAGE} .
-	docker save -o './${SIDELOAD}' ${IMAGE}
+	IMAGE='$(IMAGE)' DOCKER_SIDELOAD="$(SIDELOAD)" ./make.sh image
 
 clean: configure
 	rm -f './${SIDELOAD}' './test/${SIDELOAD}'
@@ -18,7 +16,7 @@ test: image
 	IMAGE='$(IMAGE)' ./make.sh test
 
 compile: clean-sys
-	BUILD='$(BUILD)' IMAGE='$(IMAGE)' ./make.sh compile
+	IMAGE='$(IMAGE)' ./make.sh compile
 
 install-sys: compile
 	./make.sh install
@@ -27,4 +25,4 @@ clean-sys: configure
 	./make.sh clean
 
 configure:
-	chmod +x ./make.sh
+	chmod +x ./make.sh ./scripts/*

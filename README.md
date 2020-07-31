@@ -8,7 +8,7 @@ Schedulable maintenance procedure for *docker-compose* stacks. It can be embedde
 
 The procedure takes care of pulling (updating to the latest version), side-loading and/or building all the images specified in the stack, optionally running scripts before, during or after the operation, and re-creating the containers that need to.
 
-![Maintenance workflow](docs/maintenance-workflow.png)
+[![Maintenance workflow](https://raw.githubusercontent.com/cav94mat/docker-maintenance/master/docs/maintenance-workflow.png)](https://github.com/cav94mat/docker-maintenance/wiki)
 
 You can also use the **--dry-run** option to simulate the execution, without actually performing any operations or running any scripts.
 
