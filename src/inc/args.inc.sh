@@ -16,6 +16,8 @@ export dm_clean=''
 export dm_simulated=
 #@var (Bool?) Whether form mode is enabled or disabled globally (--fork, --no-fork)
 export dm_fork=
+#@var (String) The current container ID
+export dm_fork_host=
 
 #@var (Array) Scripts to run before the maintenance of each stack
 declare -ax dm_scripts_pre
@@ -89,6 +91,28 @@ dm-help() {
     echo ' * Options `--run`, `--run-pre`, `--run-post` can be specified multiple times.'
     echo ' * Options specified last override the behavior of preceding ones, e.g:'
     echo '   `--fork --no-fork` results in `--no-fork` taking over.'
+}
+
+#@func Read options from the environment.
+# @env-out $dm_rec, $dm_pull, $dm_build, $dm_sideload, $dm_up, $dm_clean, dm_simulated,
+#          $dm_fork, dm_scripts_pre, dm_scripts_post, $dm_opts
+# @reply   ($REPLY) Number of arguments processed (to shift)
+# @exit    0: Options parsed correctly, or no option to parse,
+#          1: Unsupported option specified, or bad value for an option.
+dm-env() {
+    # Determine the current container ID.
+    #  https://stackoverflow.com/questions/20995351/how-can-i-get-docker-linux-container-information-from-within-the-container-itsel
+    local ctrdata="$(cat /proc/self/cgroup|grep "cpu:/"; cat /proc/self/mountinfo)"
+    local hostname="$(hostname)"
+    if [ "$ctrdata" ]; then   
+        for c in $(docker ps -qa --no-trunc); do
+            if [[ "${#hostname}" -ge 12 && "$c" == "$hostname"* ]] || [[ "$ctrdata" == *"$c"* ]]; then                
+                dm_fork_host="$c"
+                log --diag "Determined current container ID: $dm_fork_host"
+                break;
+            fi
+        done
+    fi
 }
 
 #@func Read options from arguments, stopping when the path of a stack is found.

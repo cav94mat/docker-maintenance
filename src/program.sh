@@ -1,52 +1,8 @@
 IFS=$'\n'
 
-#@const Current machine or container hostname
-readonly hostname="$(hostname)"
-
 #@const Docker image to use for forked containers
 #       (setted at compile time by make.sh)
 readonly fork_image; # ='cav94mat/docker-maintenance'
-
-#@func Prints a string that is supposed to contain the current container ID
-get_ctrdata() {    
-    # https://stackoverflow.com/questions/20995351/how-can-i-get-docker-linux-container-information-from-within-the-container-itsel
-    cat /proc/self/cgroup | grep "cpu:/"
-    cat /proc/self/mountinfo # Fallback
-}
-
-#@const A string that is supposed to contain the current container ID (see get_ctrdata())
-readonly ctrdata="$(get_ctrdata)"
-
-#@const (Debug only) Output file where `$ctrdata` is written to
-readonly ctrlog="$HOME/.ctrdata"
-is-debug && echo "$ctrdata" >"$ctrlog"
-
-#@func Determine whether the current stack should be forked.
-#       If neither `--fork` or `--no-fork` were specified on the command line,
-#       the value is determine by checking if this script is being run on a container
-#       belonging to the stack.
-# @env $PWD, $COMPOSE_FILE: For determining the current stack.
-#      $dm_fork: Set through --fork or --no-fork (possible values are empty, '1' or '0').
-# @stdout
-#      1 : The present stack requires forking, or --fork was specified on the command line.
-#      0 : The present stack does not require forking, or --no-fork was specified on the command line. 
-get_fork() {
-    if [ "$dm_fork" ]; then
-        echo "$dm_fork" # Use global preference            
-    else
-        # Detect if the current container is within the stack running containers
-        log --diag "Checking if the stack at $PWD needs forking"
-        for c in $(docker-compose ps -qa); do
-            if [[ "${#hostname}" -ge 12 && "$c" == "$hostname"* ]] || [[ "$ctrdata" == *"$c"* ]]; then
-                log --diag "Matched {$c} with $hostname, $ctrlog"
-                echo 1;                
-                return;
-            fi
-        done
-        log --diag "The present context ($hostname, $ctrlog) does not seem to be part of the stack."
-        echo 0;
-    fi
-}
 
 #@func Spawn a container for performing the maintenance to the current stack in fork-mode.
 #      The container is run with `-d`, so the function returns immediately after starting.
@@ -54,20 +10,29 @@ get_fork() {
 #      $DOCKER_SOCK:        The path of the docker.sock file, to be bound as a volume in the forked container.
 #                             Setted externally or automatically calculated by docker-cli.lib.sh.
 #      $fork_image:         The docker image to use for the forked container.
+#      $dm_fork_host:       For passing volumes from the host container.
 #      *:                   The current environment, to be forwarded to the forked container.
 # @stdout:
 #      The forked container ID, to be used to control the container later.
 start_fork_ctr() {
     log -I 'Starting forked container...'
-    declare -a e_vars
+    
+    # Environment
     while IFS= read -r -d $'\0' e; do
-        e_vars+=('-e' "$e")
+        opts+=('-e' "$e")
     done < <(env -0)
+    
+    # Volumes
+    if [ "$dm_fork_host" ]; then
+        opts+=("--volumes-from" "$dm_fork_host")
+    else
+        opts+=(-v "$PWD:$PWD" -v "$DOCKER_SOCK:$DOCKER_SOCK")
+    fi;
+
+    # Run in background and echo the child container ID
     docker run \
-        "${e_vars[@]}" \
+        "${opts[@]}" \
         -e 'ON_START=1' -e 'ON_SCHEDULE=' -e 'SCHEDULE=' \
-        -v "$PWD:$PWD" \
-        -v "$DOCKER_SOCK:$DOCKER_SOCK" \
         -d "$fork_image" \
         "${dm_opts[@]}" --no-pull --no-sideload --no-build --no-fork --no-recurse \
         "$PWD"
@@ -78,13 +43,26 @@ start_fork_ctr() {
 #      $DM_STACK_DIR, $DM_STACK:  Expected to point respectively to "$PWD" and "$PWD/$COMPOSE_FILE".
 run_single() { # <stack>
     log -I "Maintenance started: $DM_STACK"
-    export LOG_TAG="$PWD"
-    export DM_FORK="$(get_fork)"
+    export LOG_TAG="$PWD"    
+    export DM_FORKING
     export DM_PULLED
     export DM_SIDELOADED
     export DM_BUILT
     export DM_FORKED
     export DM_REDEPLOYED
+    if [ "$dm_fork" ]; then
+        is-true "$dm_fork" \
+            && log --diag "Forking manually ENFORCED." \
+            || log --diag "Forking manually SUPPRESSED."
+        DM_FORKING="$dm_fork"
+    elif docker-compose ps -q | grep "$dm_fork_host" >/dev/null; then
+        log --diag"The maintenance container is in the stack, forking REQUESTED."
+        DM_FORKING=1
+    else
+        log --diag "The maintenance container is NOT in the stack, forking not requested."
+        DM_FORKING=0
+    fi
+
     # 0. <Pre-scripts>
     for script in "${dm_scripts_pre[@]}"; do
         log -I "> Running pre-script:" "$script '$DM_STACK'"
@@ -133,11 +111,10 @@ run_single() { # <stack>
         fi
     fi
     
-    if is-true "$DM_FORK"; then
+    if is-true "$DM_FORKING"; then
         # 4b. Fork-mode
         #    To be run after pulling and sideloading, in order to have an up-to-date docker-maintenance image.
         local fork_ctr="$(start_fork_ctr)"
-        DM_FORKED=1
         log -I "-- Attaching to forked container ($fork_ctr) --"        
         docker logs -f "$fork_ctr"            
         log -I "-- Forked container terminated --"        
@@ -193,6 +170,7 @@ MAINTENANCE_LOG="${MAINTENANCE_LOG:-/dev/null}"
 MAINTENANCE_LOG_ANSI="${MAINTENANCE_LOG_ANSI:-/dev/null}"
 
 err=0
+dm-env
 while [ "$#" -gt 0 ]; do
     if ! { dm-args "$@" && shift $REPLY; } then
         exit 1
