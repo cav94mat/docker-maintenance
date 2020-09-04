@@ -1,24 +1,29 @@
-.PHONY: image clean install compile install-sys clean-sys configure
+.PHONY: image clean install compile install-sys clean-sys configure test
 
 IMAGE=cav94mat/docker-maintenance
+OUTPUT=./docker-maintenance.sh
 SIDELOAD=docker-sideload.tar
 
-image: clean
+$(SIDELOAD): clean
 	IMAGE='$(IMAGE)' DOCKER_SIDELOAD="$(SIDELOAD)" ./make.sh image
 
+image: $(SIDELOAD)
+	
 clean: configure
 	rm -f './${SIDELOAD}' './test/${SIDELOAD}'
 	( cd ./test; docker-compose down )
 	docker rmi '${IMAGE}' || true
 
-test: image
-	mv './${SIDELOAD}' './test/${SIDELOAD}'
+test: $(SIDELOAD)
+	cp './${SIDELOAD}' './test/${SIDELOAD}'
 	IMAGE='$(IMAGE)' ./make.sh test
 
-compile: clean-sys
-	IMAGE='$(IMAGE)' ./make.sh compile
+$(OUTPUT): clean-sys 
+	IMAGE='$(IMAGE)' OUTPUT="$(OUTPUT)" ./make.sh compile
 
-install-sys: compile
+compile: $(OUTPUT)
+
+install-sys: $(OUTPUT)
 	./make.sh install
 
 clean-sys: configure

@@ -60,9 +60,9 @@ get_fork() {
 start_fork_ctr() {
     log -I 'Starting forked container...'
     declare -a e_vars
-    for e in $(env); do
+    while IFS= read -r -d $'\0' e; do
         e_vars+=('-e' "$e")
-    done
+    done < <(env -0)
     docker run \
         "${e_vars[@]}" \
         -e 'ON_START=1' -e 'ON_SCHEDULE=' -e 'SCHEDULE=' \
@@ -75,16 +75,16 @@ start_fork_ctr() {
 
 #@func Perform the maintenance workflow on a single stack.
 # @env $PWD, $COMPOSE_FILE: For determining the current stack.
-#      $stack_dir, $stack:  Expected to point respectively to "$PWD" and "$PWD/$COMPOSE_FILE".
+#      $DM_STACK_DIR, $stack:  Expected to point respectively to "$PWD" and "$PWD/$COMPOSE_FILE".
 run_single() { # <stack>
     log -I "Maintenance started: $stack"
     export LOG_TAG="$PWD"
-    export fork="$(get_fork)"
-    export stat_pull=
-    export stat_sideload=
-    export stat_build=
-    export stat_fork=
-    export stat_up=
+    export DM_FORK="$(get_fork)"
+    export DM_PULLED
+    export DM_SIDELOADED
+    export DM_BUILT
+    export DM_FORKED
+    export DM_REDEPLOYED
     # 0. <Pre-scripts>
     for script in "${dm_scripts_pre[@]}"; do
         log -I "> Running pre-script:" "$script \'$stack\'"
@@ -106,38 +106,38 @@ run_single() { # <stack>
     if is-true "$dm_pull"; then
         log -I "Pulling remote images...";
         if dm-run docker-compose pull --ignore-pull-failures; then
-            stat_pull=1
+            DM_PULLED=1
         else        
             log -W "Error(s) occurred while pulling remote images."
-            stat_pull=0
+            DM_PULLED=0
         fi
     fi
     # 2. Sideload
     if is-true "$dm_sideload" && [ -r "$DOCKER_SIDELOAD" ]; then
         log -I "Sideloading local images...";
         if dm-run docker load -i "$DOCKER_SIDELOAD"; then
-            stat_sideload=1
+            DM_SIDELOADED=1
         else
             log -W "Error(s) occurred while sideloading local images."
-            stat_sideload=0
+            DM_SIDELOADED=0
         fi
     fi
     # 3. Build
     if is-true "$dm_build"; then
         log -I "Re-building local images...";
         if dm-run docker-compose build --pull --no-cache; then
-            stat_build=1
+            DM_BUILT=1
         else
             log -W "Error(s) occurred while re-building local images."
-            stat_build=0
+            DM_BUILT=0
         fi
     fi
     
-    if is-true "$fork"; then
+    if is-true "$DM_FORK"; then
         # 4b. Fork-mode
         #    To be run after pulling and sideloading, in order to have an up-to-date docker-maintenance image.
         local fork_ctr="$(start_fork_ctr)"
-        stat_fork=1
+        DM_FORKED=1
         log -I "-- Attaching to forked container ($fork_ctr) --"        
         docker logs -f "$fork_ctr"            
         log -I "-- Forked container terminated --"        
@@ -163,10 +163,10 @@ run_single() { # <stack>
         if is-true "$dm_up"; then
              log -I "Re-creating containers (if required)..."; 
             if dm-run docker-compose up -d; then
-                stat_up=1
+                DM_REDEPLOYED=1
             else
                 log -W "Error(s) occurred while re-creating containers."
-                stat_up=0
+                DM_REDEPLOYED=0
             fi
         fi
         # 6. Post-scripts
@@ -203,12 +203,11 @@ while [ "$#" -gt 0 ]; do
         is-true "$dm_simulated" \
             && log -W 'Dry-run mode. No actual maintenance operations are being performed.'
         #log --diag "find: $1 -maxdepth "$dm_rec" -name $COMPOSE_FILE"
-        for stack_dir in $(log --diag --execute find "$1" -maxdepth "$dm_rec" -name "$COMPOSE_FILE" -printf '%h\n'|sort); do
-        (
-            export stack_dir
-            export stack="$stack_dir/$COMPOSE_FILE"
-            cd "$stack_dir"
-            stack_dir="$PWD" # Force absolute path
+        for dir in $(log --diag --execute find "$1" -maxdepth "$dm_rec" -name "$COMPOSE_FILE" -printf '%h\n'|sort); do
+        (            
+            cd "$dir"
+            export DM_STACK="$dir/$COMPOSE_FILE"
+            export DM_STACK_DIR="$PWD" # Force absolute path
             { run_single || err=1; } 2>&1 \
                 | tee -a "$MAINTENANCE_LOG_ANSI" | tee '/dev/fd/2' | ansi-strip >> "$MAINTENANCE_LOG"
         )

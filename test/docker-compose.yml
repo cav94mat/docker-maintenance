@@ -7,7 +7,7 @@ services:
     build: ./hello/src
   # Maintenance containers
   test-maintenance:
-    command: --clean --recurse-one ${PWD}
+    command: --clean --recurse-one --run '/opt/docker-maintenance/scripts/_template.sh' ${PWD}
     image: ${IMAGE}
     environment:      
       DEBUG: 1
