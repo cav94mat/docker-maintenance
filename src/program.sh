@@ -56,7 +56,7 @@ run_single() { # <stack>
             || log --diag "Forking manually SUPPRESSED."
         DM_FORKING="$dm_fork"
     elif docker-compose ps -q | grep "$dm_fork_host" >/dev/null; then
-        log --diag"The maintenance container is in the stack, forking REQUESTED."
+        log --diag "The maintenance container is in the stack, forking REQUESTED."
         DM_FORKING=1
     else
         log --diag "The maintenance container is NOT in the stack, forking not requested."
@@ -194,7 +194,8 @@ while [ "$#" -gt 0 ]; do
     shift;
 done
 
-[ "$dm_clean" ] || { log -I "Cleaning up..."; dm-run docker system prune $dm_clean; } \
+[ -z "$dm_clean" ] \
+    || { log -I "Cleaning up..."; dm-run docker system prune $dm_clean; } \
     || log -W "Error(s) occurred while performing Docker cleanup."
 
 exit "$err";

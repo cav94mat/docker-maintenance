@@ -11,7 +11,7 @@ export dm_sideload=1
 #@var (Bool) Whether stacks should be re-started
 export dm_up=1
 #@var (String) If set, mode for the final pruning (-af or -f)
-export dm_clean=''
+export dm_clean=
 #@var (Bool) Whether simulated execution is enabled (--dry-run)
 export dm_simulated=
 #@var (Bool?) Whether form mode is enabled or disabled globally (--fork, --no-fork)
@@ -77,7 +77,7 @@ dm-help() {
     echo ''    
     echo '  --clean           Run `docker system prune -af` at the end' 
     echo '  --clean-dangling  Run `docker system prune -f` at the end'
-    echo '  --clean           Do not run any `docker system prune` operation at the end (default)'
+    echo '  --no-clean        Do not run any `docker system prune` operation at the end (default)'
     echo ''
     echo 'ENVIRONMENT':
     echo ''
