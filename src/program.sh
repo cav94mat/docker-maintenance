@@ -75,9 +75,9 @@ start_fork_ctr() {
 
 #@func Perform the maintenance workflow on a single stack.
 # @env $PWD, $COMPOSE_FILE: For determining the current stack.
-#      $DM_STACK_DIR, $stack:  Expected to point respectively to "$PWD" and "$PWD/$COMPOSE_FILE".
+#      $DM_STACK_DIR, $DM_STACK:  Expected to point respectively to "$PWD" and "$PWD/$COMPOSE_FILE".
 run_single() { # <stack>
-    log -I "Maintenance started: $stack"
+    log -I "Maintenance started: $DM_STACK"
     export LOG_TAG="$PWD"
     export DM_FORK="$(get_fork)"
     export DM_PULLED
@@ -87,8 +87,8 @@ run_single() { # <stack>
     export DM_REDEPLOYED
     # 0. <Pre-scripts>
     for script in "${dm_scripts_pre[@]}"; do
-        log -I "> Running pre-script:" "$script \'$stack\'"
-        dm-run $script "$stack" || {
+        log -I "> Running pre-script:" "$script '$DM_STACK'"
+        dm-run $script "$DM_STACK" || {
             local ec="$?"
             if [ "$ec" -eq 20 ]; then
                 log -I "Maintenance halted by pre-script $script ($ec)."
@@ -145,8 +145,8 @@ run_single() { # <stack>
     else
         # 4. <Scripts>
         for script in "${dm_scripts[@]}"; do
-            log -I "> Running script:" "$script \'$stack\'"
-            dm-run "$script" "$stack" || {
+            log -I "> Running script:" "$script \'$DM_STACK\'"
+            dm-run "$script" "$DM_STACK" || {
                 local ec="$?"
                 if [ "$ec" -eq 20 ]; then
                     log -I "Maintenance terminated by script $script ($ec)."
@@ -171,8 +171,8 @@ run_single() { # <stack>
         fi
         # 6. Post-scripts
         for script in "${scripts_post[@]}"; do
-            log -I "> Running post-script:" "$script \'$stack\'"
-           dm-run "$script" "$stack" || {
+            log -I "> Running post-script:" "$script '$DM_STACK'"
+            dm-run "$script" "$DM_STACK" || {
                 local ec="$?"
                 if [ "$ec" -eq 20 ]; then
                     log -I "Maintenance terminated by post-script $script ($ec)."
